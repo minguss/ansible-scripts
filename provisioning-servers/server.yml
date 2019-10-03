@@ -1,0 +1,63 @@
+---
+- hosts: all
+  become: yes
+  remote_user: minguss
+  tasks:
+    - name: Test Connection
+      ping:
+
+    - name: Change hostname (fqdn)
+      hostname: name={{ ansible_hostname }}.minguss.com
+
+    - name: Selinux configuration (permissive mode)
+      selinux:
+        policy: targeted
+        state: permissive
+
+    - name: Find ifcfg-* files equal 
+      find:
+        paths: /etc/sysconfig/network-scripts/
+        pattern: 'ifcfg-*'
+      register: netconf
+
+    - name: Append inline into file
+      lineinfile: 
+        path: "{{ item.path }}"
+        line: DOMAIN="minguss.com"
+      with_items: "{{ netconf.files }}"
+
+    - name: Add yum repository
+      yum_repository:
+        name: epel
+        description: EPEL YUM repo
+        baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+
+    - name: Update the system
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install a list of packages
+      yum:
+        name:
+          - yum-plugin-fastestmirror
+          - epel-release
+          - git
+          - docker
+          - net-tools
+          - wget
+          - bind-utils
+          - httpd
+          - python-httplib2
+        state: present
+
+    - name: Start service docker, if not started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+        
+    - name: Copy hosts
+      copy:
+        src: /etc/hosts
+        dest: /etc/hosts
