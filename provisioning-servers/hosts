@@ -1,0 +1,10 @@
+[servers]
+ansible2 # you can replace ip-addr
+ansible3
+
+
+[all:vars]
+ansible_connection=ssh
+ansible_ssh_user=[ssh-name]
+ansible_ssh_pass=[password]
+ansible_sudo_pass=[password]
